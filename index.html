@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat HyperExpress</title>
+  <style>
+    #messages {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+    }
+    #messages li {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+    <div id="username-form">
+        <label for="username">Choisissez un prénom:</label>
+        <input type="text" id="username" />
+        <button onclick="setUsername()">Valider</button>
+      </div>
+
+      <div id="chat-container" style="display: none;">
+        <ul id="messages"></ul>
+        <form id="form" action="">
+          <input id="m" autocomplete="off" /><button>Envoyer</button>
+        </form>
+      </div>
+
+  <script>
+   function setUsername() {
+  const username = document.getElementById('username').value;
+  if (username) {
+    const socket = new WebSocket('ws://' + 'localhost:80' + '/ws/connect?username=' + username);
+    
+    const form = document.querySelector('form');
+      const input = document.querySelector('#m');
+      const messages = document.querySelector('#messages');
+
+      socket.addEventListener('open', function(event) {
+        console.log('Connexion WebSocket ouverte');
+        });
+
+        socket.addEventListener('close', function(event) {
+        console.log('Connexion WebSocket fermée');
+        });
+
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (input.value) {
+          socket.send(input.value);
+          input.value = '';
+        }
+      });
+
+      socket.addEventListener('error', function(event) {
+        console.error('Erreur WebSocket:', event);
+        });
+
+      socket.addEventListener('message', function(event) {
+        const messageParts = event.data.split(': ');
+        const username = messageParts[0];
+        const messageContent = messageParts[1];
+
+        const li = document.createElement('li');
+        li.textContent = username + ': ' + messageContent;
+        messages.appendChild(li);
+      });
+
+    document.getElementById('username-form').style.display = 'none';
+    document.getElementById('chat-container').style.display = 'block';
+  }
+}
+   
+  </script>
+</body>
+</html>
