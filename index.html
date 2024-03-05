@@ -5,13 +5,108 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chat HyperExpress</title>
   <style>
+        body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    #chat-container {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+      width: 400px;
+      background-color: #fff;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    #chat-header {
+      background-color: #3498db;
+      color: #fff;
+      padding: 10px;
+      text-align: center;
+      font-size: 18px;
+    }
+
+    #chat-content {
+      display: flex;
+      flex-direction: column;
+      height: 300px;
+      overflow-y: scroll;
+      padding: 10px;
+    }
+
     #messages {
       list-style-type: none;
       margin: 0;
       padding: 0;
     }
+
     #messages li {
       margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      background-color: #ecf0f1;
+      display: block; /* Updated to display messages vertically */
+      max-width: 70%;
+    }
+
+    #messages li.you {
+      background-color: #3498db;
+      color: #fff;
+      float: right;
+    }
+
+    #form {
+      display: flex;
+      margin-top: 10px;
+    }
+
+    #m {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      margin-right: 5px;
+    }
+
+    #m:focus {
+      outline: none;
+      border-color: #3498db;
+    }
+
+    #form button {
+      background-color: #3498db;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 15px;
+      cursor: pointer;
+    }
+
+    #username-form {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    #username {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    #username-form button {
+      background-color: #3498db;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 15px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -22,58 +117,60 @@
         <button onclick="setUsername()">Valider</button>
       </div>
 
-      <div id="chat-container" style="display: none;">
-        <ul id="messages"></ul>
+      <div id="chat-container">
+        <h2>Chat HyperExpress</h2>
+        <div id="chat-content">
+            <ul id="messages"></ul>
+        </div>
         <form id="form" action="">
-          <input id="m" autocomplete="off" /><button>Envoyer</button>
+            <input id="m" autocomplete="off" /><button>Envoyer</button>
         </form>
       </div>
 
   <script>
-   function setUsername() {
-  const username = document.getElementById('username').value;
-  if (username) {
-    const socket = new WebSocket('ws://' + 'localhost:80' + '/ws/connect?username=' + username);
-    
-    const form = document.querySelector('form');
-      const input = document.querySelector('#m');
-      const messages = document.querySelector('#messages');
-
-      socket.addEventListener('open', function(event) {
-        console.log('Connexion WebSocket ouverte');
+    function setUsername() {
+    const username = document.getElementById('username').value;
+    if (username) {
+      const socket = new WebSocket('ws://' + 'localhost:80' + '/ws/connect?username=' + username);
+      
+      const form = document.querySelector('form');
+        const input = document.querySelector('#m');
+        const messages = document.querySelector('#messages');
+  
+        socket.addEventListener('open', function(event) {
+          console.log('Connexion WebSocket ouverte');
+          });
+  
+          socket.addEventListener('close', function(event) {
+          console.log('Connexion WebSocket fermée');
+          });
+  
+        form.addEventListener('submit', function(e) {
+          e.preventDefault();
+          if (input.value) {
+            socket.send(input.value);
+            input.value = '';
+          }
         });
-
-        socket.addEventListener('close', function(event) {
-        console.log('Connexion WebSocket fermée');
+  
+        socket.addEventListener('error', function(event) {
+          console.error('Erreur WebSocket:', event);
+          });
+  
+        socket.addEventListener('message', function(event) {
+          const messageParts = event.data.split(': ');
+          const username = messageParts[0];
+          const messageContent = messageParts[1];
+  
+          const li = document.createElement('li');
+          li.textContent = username + ': ' + messageContent;
+          messages.appendChild(li);
         });
-
-      form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        if (input.value) {
-          socket.send(input.value);
-          input.value = '';
-        }
-      });
-
-      socket.addEventListener('error', function(event) {
-        console.error('Erreur WebSocket:', event);
-        });
-
-      socket.addEventListener('message', function(event) {
-        const messageParts = event.data.split(': ');
-        const username = messageParts[0];
-        const messageContent = messageParts[1];
-
-        const li = document.createElement('li');
-        li.textContent = username + ': ' + messageContent;
-        messages.appendChild(li);
-      });
-
-    document.getElementById('username-form').style.display = 'none';
-    document.getElementById('chat-container').style.display = 'block';
+  
+      document.getElementById('username-form').style.display = 'none';
+      document.getElementById('chat-container').style.display = 'block';
+    }
   }
-}
-   
   </script>
 </body>
 </html>
